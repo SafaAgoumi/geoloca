@@ -1,24 +1,24 @@
 <x-filament::page>
-    @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
-@endpush
+    
     <div class="flex min-h-screen bg-gray-50">
         {{-- LEFT SIDEBAR --}}
         <div class="w-80 bg-white shadow-lg border-r border-gray-200">
+            
             <div class="p-6 space-y-6">
                 {{-- Search Section --}}
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Recherche</h2>
+                    <h2 class="text-center text-gray-700 ">Filtres de Recherche</h2>
+                    <br>
+                   <div class="pt-4 border-t border-gray-200">
+                    <label  class="block text-sm font-medium text-gray-700 mb-2">Dénomination</label>
                     <div class="relative">
                         <input
                             type="text"
                             placeholder="Rechercher..."
-                            wire:model.live.debounce.500ms="search"
+                            wire:model="search"
                             class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                         />
-                        <svg class="absolute left-3 top-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        </div>
                     </div>
                 </div>
 
@@ -29,7 +29,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Ville</label>
                         <div class="relative">
                             <select
-                                wire:model.live="ville"
+                                wire:model="ville"
                                 class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2.5 pr-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                             >
                                 <option value="">Toutes les villes</option>
@@ -42,9 +42,7 @@
                                     @endif
                                 @endforeach
                             </select>
-                            <svg class="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                           
                         </div>
                     </div>
 
@@ -53,7 +51,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Secteur</label>
                         <div class="relative">
                             <select
-                                wire:model.live="secteur"
+                                wire:model="secteur"
                                 class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2.5 pr-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                             >
                                 <option value="">Tous les secteurs</option>
@@ -61,9 +59,7 @@
                                     <option value="{{ $secteurOption }}">{{ $secteurOption }}</option>
                                 @endforeach
                             </select>
-                            <svg class="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                            
                         </div>
                     </div>
 
@@ -72,109 +68,121 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">État</label>
                         <div class="relative">
                             <select
-                                wire:model.live="etat"
+                                wire:model="etat"
                                 class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2.5 pr-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                             >
                                 <option value="">Tous les états</option>
                                 <option value="oui">Actif</option>
                                 <option value="non">Inactif</option>
                             </select>
-                            <svg class="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                          
                         </div>
                     </div>
 
                 </div>
+
+                {{-- Filter Button --}}
+                <div class="pt-4 border-t border-gray-200">
+                    <button
+                        wire:click="applyFilters"
+                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        <span>Filtrer</span>
+                    </button>
+                </div>
+
+               
             </div>
         </div>
 
         {{-- RIGHT CONTENT --}}
-        <div class="flex-1 flex flex-col">
-            {{-- MAP --}}
-            <div class="bg-white shadow-sm" wire:ignore>
-                <div id="dashboardMap" style="height: 45vh; width: 100%;"></div>
+        <div class="flex-1 flex flex-col min-w-0">
+            {{-- MAP (50% HEIGHT) --}}
+            <div class="flex-1 bg-white shadow-sm" wire:ignore>
+                <div id="dashboardMap" class="h-full w-full"></div>
             </div>
 
-            {{-- TABLE --}}
-            <div class="flex-1 bg-white shadow-sm">
-                <div class="p-6">
+            {{-- TABLE (50% HEIGHT) --}}
+            <div class="flex-1 bg-white shadow-sm overflow-hidden">
+                <div class="p-6 h-full flex flex-col">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-lg font-semibold text-gray-900">
                             Entreprises ({{ count($entreprises) }})
                         </h3>
                     </div>
                     
-                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-300">
-                                <thead class="bg-gray-50">
+                    <div class="flex-1 overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <div class="h-full overflow-auto">
+                            <table class="w-full divide-y divide-gray-300" style="min-width: 2000px;">
+                                <thead class="bg-gray-50 sticky top-0 z-10">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                                             Nom entreprise
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                             ICE
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                                             Forme juridique
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                                             Type
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                                             Taille entreprise
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                             En activité
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
                                             Adresse
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                             Ville
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                             Latitude
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                             Longitude
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                                             Secteur
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                                             Activité
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                                             Certifications
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
                                             Email
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                                             Tel
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                                             Fax
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                                             Contact
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
                                             Site Web
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                                             Cnss
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                                             Patente
                                         </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                                             Date création
                                         </th>
-
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 sticky right-0 bg-gray-50 z-20">
                                             Actions
                                         </th>
                                     </tr>
@@ -251,18 +259,9 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {{ $entreprise->date_creation }}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium sticky right-0 bg-white z-10 shadow-lg">
                                                 <div class="flex space-x-2">
-                                                    <button 
-                                                        wire:click="flyToMarker({{ $entreprise->id }})"
-                                                        class="text-orange-600 hover:text-orange-900 transition-colors"
-                                                        title="Voir sur la carte"
-                                                    >
-                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        </svg>
-                                                    </button>
+                                                   
                                                     <button 
                                                         wire:click="editEntreprise({{ $entreprise->id }})"
                                                         class="text-orange-600 hover:text-orange-900 transition-colors"
@@ -286,11 +285,9 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                                            <td colspan="22" class="px-6 py-12 text-center text-gray-500">
                                                 <div class="flex flex-col items-center">
-                                                    <svg class="h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                                    </svg>
+                                                    
                                                     <p class="text-sm text-gray-500">Aucune entreprise trouvée</p>
                                                 </div>
                                             </td>
