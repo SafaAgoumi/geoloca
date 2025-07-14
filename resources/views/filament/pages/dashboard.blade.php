@@ -78,8 +78,63 @@
                           
                         </div>
                     </div>
+                    
+                    {{-- Type Filter --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                        <select
+                            wire:model="type"
+                            class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2.5 pr-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                        >
+                            <option value="">Tous les types</option>
+                            <option value="PP">Personne Physique (PP)</option>
+                            <option value="PM">Personne Morale (PM)</option>
+                        </select>
+                    </div>
 
+                      {{-- Taille Filter --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Taille</label>
+                        <select
+                            wire:model="taille"
+                            class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2.5 pr-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                        >
+                            <option value="">Toutes les tailles</option>
+                            <option value="PME">PME</option>
+                            <option value="GE">Grande Entreprise</option>
+                            <option value="SU">Start-up</option>
+                        </select>
+                    </div>
                 </div>
+                {{-- Forme Juridique Filter --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Forme Juridique</label>
+                        <select
+                            wire:model="forme_juridique"
+                            class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2.5 pr-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                        >
+                            <option value="">Toutes les formes</option>
+                            <option value="SA">SA</option>
+                            <option value="SARL">SARL</option>
+                            <option value="SNC">SNC</option>
+                            <option value="SCS">SCS</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+
+                     {{-- Activité Filter --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Activité</label>
+                        <select
+                            wire:model="activite"
+                            class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2.5 pr-10 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                        >
+                            <option value="">Toutes les activités</option>
+                            @foreach($availableActivites as $activiteOption)
+                                <option value="{{ $activiteOption }}">{{ $activiteOption }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
                 {{-- Filter Button --}}
                 <div class="pt-4 border-t border-gray-200">
@@ -92,9 +147,22 @@
                         </svg>
                         <span>Filtrer</span>
                     </button>
+                    <br>
+                    
+                  {{-- Reinitialiser Button --}}
+                    <button
+                        wire:click="resetFilters"
+                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+                    >
+                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     d="M4 4v6h6M20 20v-6h-6M4 10a9 9 0 0114.25-6.75M20 14a9 9 0 01-14.25 6.75" />
+                     </svg>
+
+                        <span>Réinitialiser</span>
+                    </button>
                 </div>
 
-               
             </div>
         </div>
 
