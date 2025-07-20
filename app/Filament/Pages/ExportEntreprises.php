@@ -15,6 +15,9 @@ use Filament\Notifications\Notification;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Auth;
+use Dompdf\Dompdf;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class ExportEntreprises extends Page implements HasForms
 {
@@ -52,6 +55,10 @@ class ExportEntreprises extends Page implements HasForms
             ->danger()
             ->send();
     }
+}
+           public static function shouldRegisterNavigation(): bool
+{
+    return optional(Auth::user())->isGestionnaire() ?? false;
 }
 
 

@@ -12,12 +12,23 @@ use Filament\Tables;
 use App\Forms\Components\LeafletMap;
 use Illuminate\Support\Facades\Http;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Auth;
 
 class EntrepriseResource extends Resource
 {
     protected static ?string $model = Entreprise::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    
+    public static function shouldRegisterNavigation(): bool
+    {
+        return optional(Auth::user())->isGestionnaire() ?? false;
+    }
+    
+    public static function canAccess(): bool
+    {
+        return optional(Auth::user())->isGestionnaire() ?? false;
+    }
 
     public static function form(Form $form): Form
     {
@@ -32,7 +43,6 @@ class EntrepriseResource extends Resource
                     ->maxLength(50),
 
                 Forms\Components\TextInput::make('rc')
-                    ->label('RC')
                     ->maxLength(50)
                     ->nullable(),
 
@@ -47,8 +57,6 @@ class EntrepriseResource extends Resource
                         'autre' => 'Autre',
                     ]),
 
-
-
                 Forms\Components\Select::make('type')
                     ->label('Type')
                     ->placeholder('selectionnez une option ')
@@ -56,7 +64,6 @@ class EntrepriseResource extends Resource
                         'PP' => 'PP',
                         'PM' => 'PM',
                     ]),
-
 
                 Forms\Components\Select::make('taille_entreprise')
                     ->label('Taille Entreprise')
@@ -67,7 +74,6 @@ class EntrepriseResource extends Resource
                         'SU' => 'SU',
                     ]),
 
-
                 Forms\Components\Select::make('en_activite')
                     ->label('En Activité')
                     ->placeholder('selectionnez une option ')
@@ -75,74 +81,77 @@ class EntrepriseResource extends Resource
                         'oui' => 'Oui',
                         'non' => 'Non',
                     ])
-                    ->default('oui')
-                    ,
+                    ->default('oui'),
 
-
-
-Forms\Components\Textarea::make('adresse')
+          Forms\Components\Textarea::make('adresse')
     ->required()
-    ->lazy()
+    ->live(onBlur: true)
     ->afterStateUpdated(function ($state, callable $set) {
         if (!$state) return;
 
-        $response = Http::withHeaders([
-            'User-Agent' => 'filament-geoloc-app/1.0',
-        ])->get('https://nominatim.openstreetmap.org/search', [
-            'q' => $state,
-            'format' => 'json',
-            'limit' => 1,
-        ]);
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => 'filament-geoloc-app/1.0',
+            ])->timeout(10)->get('https://nominatim.openstreetmap.org/search', [
+                'q' => $state,
+                'format' => 'json',
+                'limit' => 1,
+            ]);
 
-        if ($response->successful() && count($response->json()) > 0) {
-            $data = $response->json()[0];
-            $lat = $data['lat'];
-            $lng = $data['lon'];
+            if ($response->successful() && !empty($response->json())) {
+                $data = $response->json()[0];
+                $lat = (float) $data['lat'];
+                $lng = (float) $data['lon'];
 
-            $set('latitude', $lat);
-            $set('longitude', $lng);
-            $set('location.lat', $lat);
-            $set('location.lng', $lng);
+                $set('latitude', $lat);
+                $set('longitude', $lng);
+                $set('location', ['lat' => $lat, 'lng' => $lng]);
+            }
+        } catch (\Exception $e) {
+            // Optional: log error
         }
     })
     ->columnSpanFull(),
 
-
-
-
-
                 Forms\Components\TextInput::make('ville')
-
                     ->maxLength(255),
 
-           LeafletMap::make('location')
-    ->label('Choisir l\'emplacement')
-    ->afterStateUpdated(fn ($state, callable $set) => [
-        $set('latitude', $state['lat'] ?? null),
-        $set('longitude', $state['lng'] ?? null),
-    ]),
-
+                LeafletMap::make('location')
+                    ->label('Choisir l\'emplacement')
+                    ->live()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if (is_array($state) && isset($state['lat']) && isset($state['lng'])) {
+                            $set('latitude', $state['lat']);
+                            $set('longitude', $state['lng']);
+                        }
+                    }),
 
                 Forms\Components\TextInput::make('latitude')
                     ->label('Latitude')
                     ->numeric()
-                    ->reactive()
-                    ->afterStateUpdated(fn ($state, callable $set) => $set('location.lat', $state))
-                    ->default(fn ($get) => $get('location.lat')),
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                        $lng = $get('longitude');
+                        if ($state && $lng) {
+                            $set('location', ['lat' => (float) $state, 'lng' => (float) $lng]);
+                        }
+                    }),
 
                 Forms\Components\TextInput::make('longitude')
                     ->label('Longitude')
                     ->numeric()
-                    ->reactive()
-                    ->afterStateUpdated(fn ($state, callable $set) => $set('location.lng', $state))
-                    ->default(fn ($get) => $get('location.lng')),
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                        $lat = $get('latitude');
+                        if ($state && $lat) {
+                            $set('location', ['lat' => (float) $lat, 'lng' => (float) $state]);
+                        }
+                    }),
 
                 Forms\Components\Textarea::make('secteur')
-
                     ->columnSpanFull(),
 
                 Forms\Components\TextInput::make('activite')
-
                     ->maxLength(255),
 
                 Forms\Components\Textarea::make('certifications')
@@ -176,7 +185,7 @@ Forms\Components\Textarea::make('adresse')
                     ->nullable(),
 
                 Forms\Components\TextInput::make('if')
-                ->label('IF')
+                    ->label('IF')
                     ->maxLength(50)
                     ->nullable(),
 
@@ -185,7 +194,6 @@ Forms\Components\Textarea::make('adresse')
                     ->nullable(),
 
                 Forms\Components\DateTimePicker::make('date_creation')
-                    ->required(),
             ]);
     }
 
@@ -217,7 +225,6 @@ Forms\Components\Textarea::make('adresse')
                 Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
-
                 Tables\Actions\DeleteAction::make()->label('Supprimer'),
                 Tables\Actions\EditAction::make()->label('Editer'),
             ])

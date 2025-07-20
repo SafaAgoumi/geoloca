@@ -1,49 +1,104 @@
-@php
-    $mapId = 'leafletMap_' . \Illuminate\Support\Str::random(5);
-@endphp
+{{-- resources/views/forms/components/leaflet-map.blade.php --}}
+<x-dynamic-component
+    :component="$getFieldWrapperView()"
+    :field="$field"
+>
+    <div class="w-full">
+        <div 
+            wire:ignore
+            x-data="leafletMapComponent(@entangle($getStatePath()).live)"
+            x-init="initMap()"
+            class="w-full"
+        >
+            <div id="map-{{ str_replace(['.', '[', ']'], '-', $getStatePath()) }}" class="w-full h-96 rounded-lg border border-gray-300"></div>
+        </div>
+    </div>
 
-<div wire:ignore>
-    <div id="{{ $mapId }}" style="height: 300px;"></div>
+    @once
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <input type="hidden" wire:model.defer="{{ $getStatePath() }}.lat">
-    <input type="hidden" wire:model.defer="{{ $getStatePath() }}.lng">
-</div>
+        <script>
+            function leafletMapComponent(stateRef) {
+                return {
+                    map: null,
+                    marker: null,
+                    state: stateRef,
 
-@push('scripts')
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let lat = @js($getState()['lat'] ?? 31.63);
-            let lng = @js($getState()['lng'] ?? -8.0);
+                    initMap() {
+                        const lat = this.state?.lat ?? 33.5731;
+                        const lng = this.state?.lng ?? -7.5898;
+                        const mapId = 'map-' + Math.random().toString(36).substring(2, 10);
 
-            let map = L.map('{{ $mapId }}').setView([lat, lng], 6);
+                        this.$el.querySelector('div[id^="map-"]').id = mapId;
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
+                        this.map = L.map(mapId).setView([lat, lng], 13);
 
-            let marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 19,
+                        }).addTo(this.map);
 
-            marker.on('dragend', function (e) {
-                let pos = marker.getLatLng();
-                @this.set('{{ $getStatePath() }}.lat', pos.lat);
-                @this.set('{{ $getStatePath() }}.lng', pos.lng);
-            });
+                        this.marker = L.marker([lat, lng], {
+                            draggable: true,
+                        }).addTo(this.map);
 
-            map.on('click', function (e) {
-                marker.setLatLng(e.latlng);
-                @this.set('{{ $getStatePath() }}.lat', e.latlng.lat);
-                @this.set('{{ $getStatePath() }}.lng', e.latlng.lng);
-            });
+                        // On marker drag: update Livewire state + reverse geocode
+                        this.marker.on('dragend', (e) => {
+                            const pos = e.target.getLatLng();
+                            this.state.lat = pos.lat;
+                            this.state.lng = pos.lng;
 
-            // Pour forcer l'affichage correct de la carte après le rendu
-            setTimeout(() => {
-                map.invalidateSize();
-            }, 300);
-        });
-    </script>
-@endpush
+                            this.reverseGeocode(pos.lat, pos.lng);
+                        });
 
-@push('styles')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-@endpush
+                        this.map.on('click', (e) => {
+                            const pos = e.latlng;
+                            this.marker.setLatLng(pos);
+                            this.state.lat = pos.lat;
+                            this.state.lng = pos.lng;
+
+                            this.reverseGeocode(pos.lat, pos.lng);
+                        });
+
+                        // Watch Livewire location state changes
+                        this.$watch('state', (newVal) => {
+                            if (!newVal?.lat || !newVal?.lng || !this.marker || !this.map) return;
+
+                            const lat = parseFloat(newVal.lat);
+                            const lng = parseFloat(newVal.lng);
+
+                            this.marker.setLatLng([lat, lng]);
+                            this.map.setView([lat, lng], this.map.getZoom());
+                        });
+                    },
+
+                    // 🧭 Reverse Geocode from coords → update adresse
+                    reverseGeocode(lat, lng) {
+                        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
+                            headers: {
+                                'User-Agent': 'filament-geoloc-app/1.0'
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data?.display_name) {
+                                // Manually set adresse field via Livewire
+                                const adresseInput = document.querySelector('[wire\\:model="data.adresse"], [wire\\:model.defer="data.adresse"], textarea[name$="adresse"]');
+
+                                if (adresseInput) {
+                                    adresseInput.value = data.display_name;
+                                    adresseInput.dispatchEvent(new Event('input'));
+                                    adresseInput.dispatchEvent(new Event('blur')); // optional
+                                }
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Reverse geocoding failed', err);
+                        });
+                    }
+                };
+            }
+        </script>
+    @endonce
+</x-dynamic-component>
